@@ -1,8 +1,13 @@
 <script lang="ts">
-  import { COST_LABEL_LIST as COST_LABEL, LABELS, UPDATE_COST_DEFINITION } from '@/constants/appConstants';
-  import type { Calendar, CostTableDate } from '@/utils/commonUtils';
+  /* eslint-disable no-console*/
+  import { COST_LABEL_LIST as COST_LABEL, LABELS } from '@/constants/appConstants';
+  import type { Calendar } from '@/utils/commonUtils';
   import { defineComponent, ref } from 'vue';
   import TableComponent from './TableComponent.vue';
+
+  import { useCostTableStore } from '@/stores/costTable';
+  import { useFormListStore } from '@/stores/formList';
+  import { storeToRefs } from 'pinia';
 
   export default defineComponent({
     name: 'FormComponent',
@@ -16,22 +21,6 @@
         type: String,
         required: true,
       },
-      costTableDateArray: {
-        type: Array<CostTableDate>,
-        required: true,
-      },
-      selectedYear: {
-        type: Number,
-        required: false,
-      },
-      selectedMonth: {
-        type: Number,
-        required: false,
-      },
-      selectedDate: {
-        type: Number,
-        required: false,
-      },
       calendar: {
         type: Array<Calendar>,
         required: true,
@@ -41,12 +30,19 @@
     setup(props) {
       // propsからカレンダーコピー
       const calendar = ref(props.calendar);
-      // 選択された年
-      const selectedYear = ref<number | undefined>(props.selectedYear ?? calendar.value[0].year);
-      // 選択された月
-      const selectedMonth = ref<number | undefined>(props.selectedMonth ?? calendar.value[0].month);
-      // 選択された日付
-      const selectedDate = ref<number | undefined>(props.selectedDate ?? calendar.value[0].date);
+      // フォームリストストア
+      const formListStore = useFormListStore();
+      const { selectedYear, selectedMonth, selectedDate } = storeToRefs(formListStore);
+      formListStore.setFormList(
+        !!selectedYear.value ? selectedYear.value : calendar.value[0].year,
+        !!selectedMonth.value ? selectedMonth.value : calendar.value[0].month,
+        !!selectedDate.value ? selectedDate.value : calendar.value[0].date
+      );
+
+      // コストテーブルデータストア
+      const costTableStore = useCostTableStore();
+      const { costTableDates } = storeToRefs(costTableStore);
+
       // 選択された費用名称
       const selectedCostName = ref<string | undefined>(COST_LABEL[0]);
       // 入力された費用
@@ -54,72 +50,18 @@
 
       // テンプレートで使用するものを返す
       return {
-        props,
-        calendar,
         selectedYear,
         selectedMonth,
         selectedDate,
         selectedCostName,
         LABELS,
         COST_LABEL,
-        findCostTableDate,
-        updateCostTableDate,
         inputCost,
+        costTableDates,
+        costTableStore,
       };
     },
   });
-
-  /**
-   * コストテーブルから更新データの検索
-   * @param costTableDates
-   * @param selectedYear
-   * @param selectedMonth
-   * @param selectedDate
-   * @param selectedCostName
-   * @param inputCost
-   */
-  const findCostTableDate = (
-    costTableDates: CostTableDate[],
-    selectedYear: number | undefined,
-    selectedMonth: number | undefined,
-    selectedDate: number | undefined,
-    selectedCostName: string | undefined,
-    inputCost: number | undefined
-  ): void => {
-    // 値がundefinedであればfalseに変換する
-    const isValid = !!selectedYear || !!selectedMonth || !!selectedDate;
-    // 早期リターン
-    if (!isValid) return;
-
-    const updateDate = costTableDates.find(
-      (item) => item.year === selectedYear && item.month === selectedMonth && item.date === selectedDate
-    );
-    // 抽出した日付を元に更新する
-    updateCostTableDate(selectedCostName, inputCost, updateDate);
-  };
-
-  /**
-   * コストテーブルデータの更新
-   * @param selectedCostName
-   * @param inputCost
-   * @param updateCostTableDate
-   */
-  const updateCostTableDate = (
-    selectedCostName: string | undefined,
-    inputCost: number | undefined,
-    updateCostTableDate: CostTableDate | undefined
-  ): void => {
-    if (!updateCostTableDate || !inputCost) return;
-
-    const propertyName: keyof CostTableDate | undefined = UPDATE_COST_DEFINITION.find(
-      (updateCost) => updateCost.definition === selectedCostName
-    )?.updateCost;
-
-    if (!propertyName) {
-      throw new Error(`対応するプロパティが見つかりません: ${selectedCostName}`);
-    }
-    (updateCostTableDate[propertyName] as number) = inputCost;
-  };
 </script>
 
 <template>
@@ -152,8 +94,8 @@
       <button
         class="mt-1 px-1 py-1 w-12 bg-rose-100 active:scale-95 rounded"
         @click="
-          findCostTableDate(
-            props.costTableDateArray,
+          costTableStore.findCostTableDate(
+            costTableDates,
             selectedYear,
             selectedMonth,
             selectedDate,
