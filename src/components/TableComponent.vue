@@ -12,7 +12,6 @@
   import { useFormListStore } from '@/stores/formList';
   import { useFunctionStore } from '@/stores/function';
 
-  import { getCostDate } from '@/repository/costDateRepository';
   import { storeToRefs } from 'pinia';
 
   export default defineComponent({
@@ -50,13 +49,8 @@
       const costTableStore = useCostTableStore();
       const { costTableDates } = storeToRefs(costTableStore);
 
-      // APIからコストデータを取得
-      const updateCostDates = async () => {
-        const costDates = await getCostDate();
-        costTableDates.value = costTableStore.setCostDates(costTableDates.value, costDates);
-      };
-      // 取得したコストデータでテーブルデータストアを上書き
-      updateCostDates();
+      // APIから取得したコストデータでテーブルデータストアを上書き
+      costTableStore.getCostDates();
 
       // 日付クリック
       const clickFunction = (year: number, month: number, date: number) => {

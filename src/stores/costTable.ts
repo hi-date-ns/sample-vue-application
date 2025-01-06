@@ -1,5 +1,5 @@
 import { UPDATE_COST_DEFINITION } from '@/constants/appConstants';
-import { postCostDate } from '@/repository/costDateRepository';
+import { getCostDates, postCostDate } from '@/repository/costDateRepository';
 import type { CostDate, CostTableDate } from '@/types/appType';
 import { defineStore } from 'pinia';
 
@@ -92,6 +92,12 @@ export const useCostTableStore = defineStore('costTableStore', {
       await postCostDate(updateDate);
     },
 
+    // コストデータをAPIで取得
+    async getCostDates() {
+      const costDates = await getCostDates();
+      this.setCostDates(this.costTableDates, costDates);
+    },
+
     /**
      * コストテーブルにAPIから取得したコストデータを設定する
      * @param costTableDates
@@ -101,7 +107,7 @@ export const useCostTableStore = defineStore('costTableStore', {
      * @param selectedCostName
      * @param inputCost
      */
-    setCostDates(costTableDates: CostTableDate[], costDates: CostDate[]): CostTableDate[] {
+    setCostDates(costTableDates: CostTableDate[], costDates: CostDate[]) {
       const updateCostTableDates = costTableDates.map((costTableDate) => {
         const match = costDates.find(
           (costDate) =>
@@ -111,7 +117,7 @@ export const useCostTableStore = defineStore('costTableStore', {
         );
         return match ? { ...costTableDate, foodCost: match.food_cost, fixedCost: match.fixed_cost } : costTableDate;
       });
-      return updateCostTableDates;
+      this.costTableDates = updateCostTableDates;
     },
   },
 });
