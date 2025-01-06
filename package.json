@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@typescript-eslint/parser": "^5.52.0",
+    "axios": "^1.7.9",
     "husky": "^8.0.3",
     "lint-staged": "^13.1.2",
     "pinia": "^2.0.28",
