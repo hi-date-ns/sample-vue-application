@@ -1,5 +1,6 @@
 import { UPDATE_COST_DEFINITION } from '@/constants/appConstants';
-import type { CostTableDate } from '@/utils/commonUtils';
+import { postCostDate } from '@/repository/costDateRepository';
+import type { CostDate, CostTableDate } from '@/types/appType';
 import { defineStore } from 'pinia';
 
 export const useCostTableStore = defineStore('costTableStore', {
@@ -75,6 +76,42 @@ export const useCostTableStore = defineStore('costTableStore', {
         throw new Error(`対応するプロパティが見つかりません: ${selectedCostName}`);
       }
       (updateCostTableDate[propertyName] as number) = inputCost;
+
+      // 更新
+      this.updateCostDates({
+        year: updateCostTableDate.year,
+        month: updateCostTableDate.month,
+        day: updateCostTableDate.date,
+        food_cost: updateCostTableDate.foodCost,
+        fixed_cost: updateCostTableDate.fixedCost,
+      });
+    },
+
+    // コストデータをAPIで上書き
+    async updateCostDates(updateDate: CostDate) {
+      await postCostDate(updateDate);
+    },
+
+    /**
+     * コストテーブルにAPIから取得したコストデータを設定する
+     * @param costTableDates
+     * @param selectedYear
+     * @param selectedMonth
+     * @param selectedDate
+     * @param selectedCostName
+     * @param inputCost
+     */
+    setCostDates(costTableDates: CostTableDate[], costDates: CostDate[]): CostTableDate[] {
+      const updateCostTableDates = costTableDates.map((costTableDate) => {
+        const match = costDates.find(
+          (costDate) =>
+            costDate.year === costTableDate.year &&
+            costDate.month === costTableDate.month &&
+            costDate.day === costTableDate.date
+        );
+        return match ? { ...costTableDate, foodCost: match.food_cost, fixedCost: match.fixed_cost } : costTableDate;
+      });
+      return updateCostTableDates;
     },
   },
 });

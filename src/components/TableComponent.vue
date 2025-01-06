@@ -5,13 +5,14 @@
     TABLE_COMPONENT_HEDER_LABEL as HEDER_LABEL,
     TEXT_COLOR,
   } from '@/constants/appConstants';
-  import type { Calendar } from '@/utils/commonUtils';
+  import type { Calendar } from '@/types/appType';
   import { defineComponent, ref } from 'vue';
 
   import { useCostTableStore } from '@/stores/costTable';
   import { useFormListStore } from '@/stores/formList';
   import { useFunctionStore } from '@/stores/function';
 
+  import { getCostDate } from '@/repository/costDateRepository';
   import { storeToRefs } from 'pinia';
 
   export default defineComponent({
@@ -48,6 +49,14 @@
       // コストテーブルデータストア
       const costTableStore = useCostTableStore();
       const { costTableDates } = storeToRefs(costTableStore);
+
+      // APIからコストデータを取得
+      const updateCostDates = async () => {
+        const costDates = await getCostDate();
+        costTableDates.value = costTableStore.setCostDates(costTableDates.value, costDates);
+      };
+      // 取得したコストデータでテーブルデータストアを上書き
+      updateCostDates();
 
       // 日付クリック
       const clickFunction = (year: number, month: number, date: number) => {
