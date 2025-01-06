@@ -74,4 +74,5 @@ export const UPDATE_COST_DEFINITION = [
 export const TABLE_COMPONENT_HEDER_LABEL = [LABELS.DATE, LABELS.DAY, LABELS.FOOD_COST, LABELS.FIXED_COST];
 
 // APIURL
-export const COST_DATES_API_URL = 'http://127.0.0.1:8000/costdates/';
+export const GET_COST_DATES_URL = 'http://127.0.0.1:8000/costdates/';
+export const POST_COST_DATE_URL = 'http://127.0.0.1:8000/costdates/';
